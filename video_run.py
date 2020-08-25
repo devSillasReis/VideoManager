@@ -9,6 +9,10 @@ track_total_time = None
 current_time = 0
 
 
+class FinishProgram(Exception):
+    pass
+
+
 # Obter informações sobre quando o último vídeo visualizado parou
 def last_time():
     manager_data = open('manager_data.txt','r', encoding='utf-8')
@@ -38,6 +42,11 @@ def wait_open(window_title):
 
 # Avançar para o período em que parou na última vez
 def time_adjust(last_time):
+    #Obtendo foco
+    video_window = gw.getWindowsWithTitle(last_time[0])[0]
+    video_window.minimize()
+    video_window.maximize()
+    
     # Obtendo tempo total do vídeo
     global track_total_time
     track_total_time = total_time()
@@ -80,7 +89,7 @@ def total_time():
     pygui.press(['tab', 'tab', 'tab', 'tab'])
     pygui.hotkey('ctrl', 'c')
     pygui.press('esc')
-    time.sleep(0.1)
+    time.sleep(0.5)
     total_time = clipboard.paste()
 
     # Convertendo pra valores utilizados
@@ -114,18 +123,50 @@ def next_track():
     track_total_time = total_time()
 
 
-# Abrindo vídeo
+# Espera foco da janela para realizar uma ação
+def focus(action):
+    # Obtendo nome da janela
+    manager_data = open('manager_data.txt','r', encoding='utf-8')
+    track_title = manager_data.read().split('\n')[0]
+    manager_data.close()
+    
+    # Obtendo informações da janela do vídeo e a janela atualmente em foco
+    active_window = gw.getActiveWindow()
+    try:
+        video_window = gw.getWindowsWithTitle(track_title)[0]
+    except IndexError:
+        raise FinishProgram()
+    
+    # Se a janela em foco não for a do vídeo, espera até que seja
+    if active_window != video_window:
+        while not video_window.isActive:
+            pass
+    
+    # Atualiza o tempo gravado
+    if action == 'update_time()':
+        update_time()
+
+
+# Abrindo vídeo e ajustando tempo
 last_time = last_time()
 open_video(last_time)
 wait_open(last_time[0])
 time_adjust(last_time)
 
+# Ciclo principal
 # Atualizando tempo atual a cada 10 segundos
 while True:
-    while int(current_time) < int(track_total_time)-1000.0:
-        time.sleep(10)
-        update_time()
+    try:
+        # Repete enquanto o episódio não acaba
+        while int(current_time) < int(track_total_time)-1000.0:
+            time.sleep(10)
+            # Espera até ter foco na janela do vídeo para atualizar o tempo
+            focus('update_time()')
 
-        print(current_time, track_total_time)
+            print(current_time, track_total_time)
+        next_track()
 
-    next_track()
+    #Quando não consegue achar a janela no vídeo durante o focus(), sai do programa
+    except FinishProgram:
+        print('Até a próxima!!!')
+        exit(0)
