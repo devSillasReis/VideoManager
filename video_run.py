@@ -1,4 +1,5 @@
 import pyautogui as pygui
+import pygetwindow as gw
 import clipboard
 import time
 import sys
@@ -17,24 +18,35 @@ def last_time():
     return last_time
 
 
-# Abrir vídeo em tempo específico
+# Abrir vídeo
 def open_video(last_time):
     # Comando para abrir vídeo varia de acordo com o sistema
     if sys.platform == 'win32':
         os.startfile(last_time[0])
 
-    # Espera para dar tempo do vídeo abrir
-    time.sleep(5)
 
+# Espera a janela do vídeo abrir para dar continuidade
+def wait_open(window_title):
+    opened = False
+    while opened is False:
+        try:
+            video_window = gw.getWindowsWithTitle(window_title)[0]
+            opened = True
+        except IndexError:
+            pass
+
+
+# Avançar para o período em que parou na última vez
+def time_adjust(last_time):
     # Obtendo tempo total do vídeo
     global track_total_time
     track_total_time = total_time()
-    
 
     # Sequência de comandos para avançar para tempo específico dentro do VLC Media Player
     pygui.hotkey('ctrl', 'g')
     pygui.write(last_time[1])
     pygui.press('enter')
+
 
 # Formatar para padrão de tempo do projeto
 def format_time(time):
@@ -68,6 +80,7 @@ def total_time():
     pygui.press(['tab', 'tab', 'tab', 'tab'])
     pygui.hotkey('ctrl', 'c')
     pygui.press('esc')
+    time.sleep(0.1)
     total_time = clipboard.paste()
 
     # Convertendo pra valores utilizados
@@ -104,6 +117,8 @@ def next_track():
 # Abrindo vídeo
 last_time = last_time()
 open_video(last_time)
+wait_open(last_time[0])
+time_adjust(last_time)
 
 # Atualizando tempo atual a cada 10 segundos
 while True:
@@ -114,4 +129,3 @@ while True:
         print(current_time, track_total_time)
 
     next_track()
-
