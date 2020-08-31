@@ -3,8 +3,7 @@ import video_run
 import tkinter as tk
 from tkinter import *
 from tkinter import messagebox
-from os import listdir
-from os.path import isfile, join
+import os
 from glob import glob
 
 
@@ -77,14 +76,15 @@ class Menu(Frame):
 
         self.scrollable_frame = None
         self.message_label = None
-
+        self.test = Frame()
+        self.test.pack()
         self.initUI()
     
     def initUI(self):
         self.master.title('Video Manager')
 
         # Criação de espaço para alertas da UI
-        self.message_label = Label(self, text='Bem vindo!', bg='blue', height=1)
+        self.message_label = Label(self, text='Bem vindo!', bg='lightgreen', height=1)
         self.message_label.pack(side=BOTTOM, fill=BOTH)
 
         # Criação da parte principal onde se encontram as seções do usuário
@@ -95,19 +95,21 @@ class Menu(Frame):
         self.pack(fill=BOTH, expand=True)
 
         # Botões para adicionar e remover seções
-        new_section_bt = Button(self, text='+ Nova seção', bg='lightgreen', height=1, command=self.add_section)
-        new_section_bt.pack(side=LEFT, fill=BOTH, expand=True)
-        remove_section_bt = Button(self, text='- Remover seção', bg='red', height=1)
-        remove_section_bt.pack(side=RIGHT, fill=BOTH, expand=True)
+        self.new_section_bt = Button(self, text='+ Nova seção', bg='lightgreen', height=1, command=self.add_section)
+        self.new_section_bt.pack(side=LEFT, fill=BOTH, expand=True)
+        self.remove_section_bt = Button(self, text='- Remover seção', bg='red', height=1, command=self.remove_section)
+        self.remove_section_bt.pack(side=RIGHT, fill=BOTH, expand=True)
 
     def initSections(self):
         sections_path = glob('./sections/*.fmng')
         self.sections_data = list()
         self.sections_frames = list()
+        self.checkbuttons = list()
 
         # Carregar dados das seções
         for section in sections_path:
             sect_name = section.split('\\')[-1].split('.')[0]
+            
 
             with open(section, 'r', encoding='utf-8') as sect:
                 sect_data = sect.read().split('\n')
@@ -118,13 +120,18 @@ class Menu(Frame):
         # Exibir seções no scrollable frame
         for section in self.sections_data:
             sect_frame = Frame(self.scrollable_frame.scrollable, bg='purple')
-            Label(sect_frame, text=f'{section[3]}', bg='purple').grid(row=0, column=1, sticky='w')
-            Label(sect_frame, text=f'Episódio atual: {section[1]}', bg='purple').grid(row=1, column=1, sticky='w')
-            Label(sect_frame, text=f'Momento atual: {section[2]}', bg='purple').grid(row=2, column=1, sticky='w')
-            Label(sect_frame, text=f'', bg='purple').grid(row=3, column=1, columnspan=2)
+            Label(sect_frame, text=f'{section[3]}', bg='purple').grid(row=0, column=2, sticky='w')
+            Label(sect_frame, text=f'Episódio atual: {section[1]}', bg='purple').grid(row=1, column=2, sticky='w')
+            Label(sect_frame, text=f'Momento atual: {section[2]}', bg='purple').grid(row=2, column=2, sticky='w')
+            Label(sect_frame, text=f'', bg='purple').grid(row=3, column=2, columnspan=2)
             
             index = len(self.sections_frames)
-            Button(sect_frame, text='Continuar\nassistindo', bg='grey', command=lambda index=index: self.keep_watching(index)).grid(row=0, column=0, rowspan=3)
+            Button(sect_frame, text='Continuar\nassistindo', bg='grey', command=lambda index=index: self.keep_watching(index)).grid(row=0, column=1, rowspan=3)
+
+            self.checkbuttons.append(IntVar())
+            checkbutton = Checkbutton(sect_frame, bg='purple', variable=self.checkbuttons[len(self.checkbuttons)-1])
+            checkbutton.grid(row=0, column=0, rowspan=3)
+            checkbutton.grid_forget()
 
             sect_frame.pack(fill=BOTH)
             self.sections_frames.append(sect_frame)
@@ -153,6 +160,56 @@ class Menu(Frame):
         self.clear_sections_frames()
         self.initSections()
         
+    def remove_section(self):
+        def cancel():
+            self.new_section_bt.pack(side=LEFT, fill=BOTH, expand=True)
+            self.remove_section_bt.pack(side=RIGHT, fill=BOTH, expand=True)
+
+            self.message_label.config(bg='lightgreen', text='Bem-vindo!')
+
+            confirm_bt.pack_forget()
+            cancel_bt.pack_forget()
+
+            self.clear_sections_frames()
+            self.initSections()
+        
+        def confirm():
+            option = messagebox.askokcancel(title='Excluir sessões', message='Excluirá as sessões selecionadas permanentemente.\nDeseja continuar?')
+
+            if option == True:
+                for i in range(len(self.checkbuttons)):
+                    if self.checkbuttons[i].get() == 1:
+                        sect_path = f'./sections/{self.sections_data[i][3]}.fmng'
+                        if os.path.isfile(sect_path):
+                            os.remove(sect_path)
+                
+            self.message_label.config(bg='lightgreen', text='Bem-vindo!')
+            
+            self.clear_sections_frames()
+            self.initSections()
+            
+            self.new_section_bt.pack(side=LEFT, fill=BOTH, expand=True)
+            self.remove_section_bt.pack(side=RIGHT, fill=BOTH, expand=True)
+
+            confirm_bt.pack_forget()
+            cancel_bt.pack_forget()
+        
+        self.message_label.config(bg='red', text='Removendo sessões...')
+
+        for frame in self.sections_frames:
+            for widget in frame.winfo_children():
+                if type(widget) == Checkbutton:
+                    widget.grid(row=0, column=0, rowspan=3)
+        
+        self.new_section_bt.pack_forget()
+        self.remove_section_bt.pack_forget()
+
+        cancel_bt = Button(self, text='Cancelar', bg='lightgreen', height=1, command=cancel)
+        cancel_bt.pack(side=LEFT, fill=BOTH, expand=True)
+        confirm_bt = Button(self, text='Confirmar', bg='red', height=1, command=confirm)
+        confirm_bt.pack(side=RIGHT, fill=BOTH, expand=True)
+
+
 
 root = Tk()
 root.geometry('500x800')
