@@ -146,7 +146,7 @@ def focus(action):
     if action == 'update_time()':
         update_time()
 
-
+"""
 # Abrindo vídeo e ajustando tempo
 last_time = last_time()
 open_video(last_time)
@@ -170,3 +170,5 @@ while True:
     except FinishProgram:
         print('Até a próxima!!!')
         exit(0)
+
+"""

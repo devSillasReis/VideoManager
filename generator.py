@@ -25,6 +25,3 @@ def generate(file_path):
 
     # Copiar executável do video_run.py para pasta destino
     copyfile('dist/video_run.exe', f'{folder_path}VideoManager.exe')
-
-
-generate(get_file())
