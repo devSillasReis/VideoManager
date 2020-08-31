@@ -70,6 +70,7 @@ class NewSectionWindow(Toplevel):
         else:
             messagebox.showwarning(title='Nome inválido', message='Você precisa escolher um nome para a sessão!')
 
+
 class Menu(Frame):
     def __init__(self):
         super().__init__()
@@ -121,7 +122,10 @@ class Menu(Frame):
             Label(sect_frame, text=f'Episódio atual: {section[1]}', bg='purple').grid(row=1, column=1, sticky='w')
             Label(sect_frame, text=f'Momento atual: {section[2]}', bg='purple').grid(row=2, column=1, sticky='w')
             Label(sect_frame, text=f'', bg='purple').grid(row=3, column=1, columnspan=2)
-            Button(sect_frame, text='Continuar\nassistindo', bg='grey').grid(row=0, column=0, rowspan=3)
+            
+            index = len(self.sections_frames)
+            Button(sect_frame, text='Continuar\nassistindo', bg='grey', command=lambda index=index: self.keep_watching(index)).grid(row=0, column=0, rowspan=3)
+
             sect_frame.pack(fill=BOTH)
             self.sections_frames.append(sect_frame)
 
@@ -134,7 +138,21 @@ class Menu(Frame):
     def add_section(self):
         NewSectionWindow(self)
 
+    def keep_watching(self, section_index):
+        print(self.sections_data[section_index])
+        root.withdraw()
+        video_run.VideoRun(self.sections_data[section_index])
+        root.deiconify()
+        print(self.sections_data[section_index])
+        self.update_section(self.sections_data[section_index])
 
+    def update_section(self, section_data):
+        with open(f'./sections/{section_data[3]}.fmng', 'w', encoding='utf-8') as section_file:
+            section_file.write(f'{section_data[0]}\n{section_data[1]}\n{section_data[2]}')
+
+        self.clear_sections_frames()
+        self.initSections()
+        
 
 root = Tk()
 root.geometry('500x800')
