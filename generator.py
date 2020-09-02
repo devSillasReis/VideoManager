@@ -20,4 +20,4 @@ def generate(section_name):
 
     # Criando arquivo de sessão com informações recolhidas
     with open(f'./sections/{section_name}.fmng', 'w', encoding='utf-8') as section_data:
-        section_data.write(f'{folder_path}\n{file_name}\n0000000')
+        section_data.write(f'{folder_path}\n{file_name}\n000000')
