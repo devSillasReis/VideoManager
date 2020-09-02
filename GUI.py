@@ -13,7 +13,7 @@ class ScrollableFrame(Frame):
 
         canvas = Canvas(container, bg='purple')
         scrollbar = Scrollbar(container, orient='vertical', command=canvas.yview)
-        self.scrollable = Frame(canvas)
+        self.scrollable = Frame(canvas, bg='purple')
 
         self.scrollable.bind(
             "<Configure>",
