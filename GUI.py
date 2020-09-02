@@ -122,7 +122,7 @@ class Menu(Frame):
             sect_frame = Frame(self.scrollable_frame.scrollable, bg='purple')
             Label(sect_frame, text=f'{section[3]}', bg='purple').grid(row=0, column=2, sticky='w')
             Label(sect_frame, text=f'Episódio atual: {section[1]}', bg='purple').grid(row=1, column=2, sticky='w')
-            Label(sect_frame, text=f'Momento atual: {section[2]}', bg='purple').grid(row=2, column=2, sticky='w')
+            Label(sect_frame, text=f'Momento atual: {video_run.show_format_time(section[2])}', bg='purple').grid(row=2, column=2, sticky='w')
             Label(sect_frame, text=f'', bg='purple').grid(row=3, column=2, columnspan=2)
             
             index = len(self.sections_frames)

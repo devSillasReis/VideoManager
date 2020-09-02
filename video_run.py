@@ -10,6 +10,22 @@ class ClosedSection(Exception):
     pass
 
 
+def show_format_time(time_variable):
+    str_time = ''
+
+    if len(time_variable) < 6:
+        full_time = '00' + time_variable
+    else:
+        full_time = time_variable
+
+    for i in range(len(full_time)):
+        str_time = str_time + full_time[i]
+        if(i%2 != 0 and i != len(full_time)-1):
+            str_time = str_time + ':'
+
+    return str_time
+
+
 class VideoRun():
     def __init__(self, section_data):
         self.section_data = section_data
@@ -24,7 +40,7 @@ class VideoRun():
         while True:
             try:
                 # Repete enquanto o episódio não acaba
-                while int(self.section_data[2]) < int(self.track_total_time)-1000.0:
+                while int(self.section_data[2]) < int(self.track_total_time)-1:
                     time.sleep(10)
                     # Espera até ter foco na janela do vídeo para atualizar o tempo
                     self.focus('update_time()')
@@ -85,7 +101,8 @@ class VideoRun():
         pygui.press('esc')
 
         # Atualizando manager_data
-        self.section_data[2] = self.__format_time(clipboard.paste())
+        current_time = clipboard.paste().split('.')[0]
+        self.section_data[2] = self.__format_time(current_time)
 
 
     # Obter tempo total do vídeo    
@@ -100,15 +117,14 @@ class VideoRun():
 
         # Convertendo pra valores utilizados
         total_time = total_time.split(':')
-        minutes = int(total_time[0]) * 60 + int(total_time[1])
-        seconds = total_time[2]
+        total_time = [x for x in total_time if int(x) > 0]
         
-        return self.__format_time(f'{minutes}:{seconds}.000')
+        return self.__format_time(f'{"".join(total_time)}')
 
 
     # Pular para próxima faixa
     def next_track(self):
-        self.section_data[2] = '0000000'
+        self.section_data[2] = '000000'
 
         # Obtendo nome da faixa
         pygui.press('pagedown')
