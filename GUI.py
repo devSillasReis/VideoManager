@@ -209,10 +209,14 @@ class Menu(Frame):
         confirm_bt = Button(self, text='Confirmar', bg='red', height=1, command=confirm)
         confirm_bt.pack(side=RIGHT, fill=BOTH, expand=True)
 
-
+def on_closing():
+    root.destroy()
+    print('Janela fechada')
+    exit(0)
 
 root = Tk()
 root.geometry('500x800')
+root.protocol('WM_DELETE_WINDOW', on_closing)
 main_view = Menu()
 main_view.initSections()
 root.mainloop()
