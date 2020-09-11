@@ -113,7 +113,6 @@ class VideoRun():
     # Obter tempo atual do vídeo
     def update_time(self):
         # Obtendo tempo
-        pygui.press('esc')
         pygui.hotkey('ctrl', 'g')
         pygui.hotkey('ctrl', 'a')
         pygui.hotkey('ctrl', 'c')
