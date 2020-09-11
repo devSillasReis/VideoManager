@@ -4,9 +4,14 @@ import clipboard
 import time
 import sys
 import os
+import re
 
 
 class ClosedSection(Exception):
+    pass
+
+
+class WrongFormatException(Exception):
     pass
 
 
@@ -27,7 +32,14 @@ def show_format_time(time_variable):
 
 
 class VideoRun():
+    # Definição de variáveis estáticas
+    formats = {
+        'time': '^\d\d:\d\d(:\d\d){0,1}$',
+        'name': '^[^\.]+\.[^\.]+$'
+    }
+    
     def __init__(self, section_data):
+        
         self.section_data = section_data
         self.track_total_time = None
         
@@ -41,11 +53,15 @@ class VideoRun():
             try:
                 # Repete enquanto o episódio não acaba
                 while int(self.section_data[2]) < int(self.track_total_time)-1:
-                    time.sleep(10)
-                    # Espera até ter foco na janela do vídeo para atualizar o tempo
-                    self.focus('update_time()')
+                    try:
+                        time.sleep(10)
+                        # Espera até ter foco na janela do vídeo para atualizar o tempo
+                        self.focus('update_time()')
 
-                    print(self.section_data[2], self.track_total_time)
+                        print(self.section_data[2], self.track_total_time)
+                    except WrongFormatException:
+                        pass
+                
                 self.next_track()
 
             #Quando não consegue achar a janela no vídeo durante o focus(), sai do programa
@@ -79,47 +95,54 @@ class VideoRun():
         video_window.restore()
         
         # Obtendo tempo total do vídeo
-        self.track_total_time = self.total_time()
+        self.track_total_time = VideoRun.total_time()
 
         # Sequência de comandos para avançar para tempo específico dentro do VLC Media Player
+        pygui.press('esc')
         pygui.hotkey('ctrl', 'g')
         pygui.write(self.section_data[2])
         pygui.press('enter')
 
 
     # Formatar para padrão de tempo do projeto
-    def __format_time(self, time):
+    @staticmethod
+    def __format_time(time):
         return ''.join(x for x in time if x.isnumeric())
 
 
     # Obter tempo atual do vídeo
     def update_time(self):
         # Obtendo tempo
+        pygui.press('esc')
         pygui.hotkey('ctrl', 'g')
         pygui.hotkey('ctrl', 'a')
         pygui.hotkey('ctrl', 'c')
         pygui.press('esc')
 
-        # Atualizando manager_data
+        # Atualizando o tempo
         current_time = clipboard.paste().split('.')[0]
-        self.section_data[2] = self.__format_time(current_time)
+        VideoRun.valid_format(current_time, 'time')
+        self.section_data[2] = VideoRun.__format_time(current_time)
 
 
-    # Obter tempo total do vídeo    
-    def total_time(self):
+    # Obter tempo total do vídeo
+    @staticmethod    
+    def total_time():
         # Obtendo tempo total
+        pygui.press('esc')
         pygui.hotkey('shift', 'f10')
         pygui.press(['tab', 'tab', 'tab', 'tab'])
         pygui.hotkey('ctrl', 'c')
         pygui.press('esc')
         time.sleep(0.5)
         total_time = clipboard.paste()
+        VideoRun.valid_format(total_time, 'time')
 
         # Convertendo pra valores utilizados
         total_time = total_time.split(':')
         total_time = [x for x in total_time if int(x) > 0]
         
-        return self.__format_time(f'{"".join(total_time)}')
+        return VideoRun.__format_time(f'{"".join(total_time)}')
 
 
     # Pular para próxima faixa
@@ -134,11 +157,13 @@ class VideoRun():
         pygui.hotkey('ctrl', 'c')
         pygui.press('esc')
 
-        # Atualizando arquivo manager_data.txt
-        self.section_data[1] = clipboard.paste()
+        
+        # Atualizando nome do vídeo
+        name = clipboard.paste()
+        self.section_data[1] = name
 
         # Obtendo tempo total do vídeo
-        self.track_total_time = self.total_time()
+        self.track_total_time = VideoRun.total_time()
 
 
     # Espera foco da janela para realizar uma ação
@@ -161,3 +186,11 @@ class VideoRun():
         # Atualiza o tempo gravado
         if action == 'update_time()':
             self.update_time()
+
+    
+    # Levanta a exceção WrongFormatException se o formato não for válido
+    @staticmethod
+    def valid_format(text, text_type):
+        valid = re.search(VideoRun.formats[text_type], text)
+        if valid is None:
+            raise WrongFormatException()
